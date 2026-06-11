@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  console:
+    build: ./central_console
+    ports:
+      - "5000:5000"          # Dashboard accessible at http://localhost:5000
+    volumes:
+      - ./data:/app/data     # Only shared volume for persistence
+    networks:
+      - deception-net
+    restart: unless-stopped
+
+  honeypot-1:
+    build: ./honeypot_node
+    ports:
+      # Updated host ports to avoid Windows conflicts
+      - "2222:2222"          # SSH
+      - "8080:8080"          # HTTP
+      - "2121:2121"          # FTP
+      - "3307:3307"          # MySQL
+      - "4450:4450"          # SMB
+    environment:
+      - CONSOLE_URL=http://console:5000/api/attack
+      - NODE_ID=honeypot-node-1
+    networks:
+      - deception-net
+    restart: unless-stopped
+    depends_on:
+      - console
+
+networks:
+  deception-net:
+    driver: bridge
